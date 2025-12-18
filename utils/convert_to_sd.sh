@@ -10,7 +10,7 @@
 # Output files are saved to the SD_Converted subdirectory.
 #
 
-BASE="/home/rajvi/Videos/retroTV"
+BASE="$HOME/Videos/retroTV" # Update as needed.
 OUT="$BASE/SD_Converted"
 
 mkdir -p "$OUT"

@@ -1,0 +1,17 @@
+[Unit]
+Description=RetroTV Continuous Video Player
+After=local-fs.target graphical.target
+Wants=graphical.target
+
+[Service]
+Type=simple
+User=retro-tv
+Environment=DISPLAY=:0
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+ExecStartPre=/bin/sleep 10
+ExecStart=/usr/local/bin/retrotv-player.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target

@@ -1,0 +1,5 @@
+# Udev rule to automount USB drive labeled "retroTV"
+# Install to: /etc/udev/rules.d/99-retrotv-usb.rules
+
+ACTION=="add", SUBSYSTEM=="block", ENV{ID_FS_LABEL}=="retroTV", RUN+="/bin/mkdir -p /media/retroTV", RUN+="/bin/mount -o uid=1000,gid=1000 /dev/%k /media/retroTV"
+ACTION=="remove", SUBSYSTEM=="block", ENV{ID_FS_LABEL}=="retroTV", RUN+="/bin/umount /media/retroTV"

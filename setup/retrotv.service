@@ -9,6 +9,7 @@ User=retro-tv
 Environment=DISPLAY=:0
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 ExecStartPre=/bin/sleep 10
+ExecStartPre=+/usr/local/bin/retrotv-mount.sh
 ExecStart=/usr/local/bin/retrotv-player.sh
 Restart=on-failure
 RestartSec=5

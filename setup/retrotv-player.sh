@@ -15,17 +15,22 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
-# Wait for USB drive to be mounted (max 60 seconds)
+# Wait for USB drive to be mounted (max 30 seconds)
+# Note: retrotv-mount.sh handles the actual mounting via systemd ExecStartPre
 wait_for_usb() {
-    log "Waiting for USB drive to mount..."
-    for i in {1..60}; do
+    log "Waiting for USB drive to be ready..."
+    for i in {1..30}; do
         if mountpoint -q "$USB_MOUNT" 2>/dev/null; then
-            log "USB drive mounted at $USB_MOUNT"
-            return 0
+            # Verify we can write to the USB
+            local test_file="$USB_MOUNT/.write_test_$$"
+            if echo "test" > "$test_file" 2>/dev/null && rm -f "$test_file" 2>/dev/null; then
+                log "USB drive mounted and writable at $USB_MOUNT"
+                return 0
+            fi
         fi
         sleep 1
     done
-    log "ERROR: USB drive not mounted after 60 seconds"
+    log "ERROR: USB drive not mounted or not writable after 30 seconds"
     return 1
 }
 
@@ -50,6 +55,9 @@ generate_playlist() {
     # Reset position to start of new playlist
     echo "0" > "$POSITION_FILE"
     echo "0" > "$TIMESTAMP_FILE"
+
+    # Sync state files to ensure they persist on USB
+    sync "$PLAYLIST_FILE" "$POSITION_FILE" "$TIMESTAMP_FILE"
 }
 
 # Check if playlist needs regeneration (missing or all videos played)
@@ -93,12 +101,14 @@ get_current_video() {
 save_position() {
     local pos=$1
     echo "$pos" > "$POSITION_FILE"
+    sync "$POSITION_FILE"
 }
 
 # Save timestamp (called periodically during playback)
 save_timestamp() {
     local ts=$1
     echo "$ts" > "$TIMESTAMP_FILE"
+    # Note: not syncing here to avoid I/O overhead every 10 seconds
 }
 
 # Get last saved timestamp
@@ -112,6 +122,7 @@ next_video() {
     local next=$((current + 1))
     save_position "$next"
     echo "0" > "$TIMESTAMP_FILE"  # Reset timestamp for new video
+    sync "$TIMESTAMP_FILE"
     log "Advanced to playlist position $next"
 }
 

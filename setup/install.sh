@@ -24,7 +24,7 @@ fi
 echo "Service will run as user: $SERVICE_USER"
 echo ""
 
-echo "[1/7] Installing VLC if not present..."
+echo "[1/8] Installing VLC if not present..."
 if ! command -v cvlc &> /dev/null; then
     apt update
     apt install -y vlc
@@ -32,24 +32,29 @@ else
     echo "  VLC already installed"
 fi
 
-echo "[2/7] Installing udev rule for USB automount..."
+echo "[2/8] Installing udev rule for USB automount..."
 cp "$SCRIPT_DIR/99-retrotv-usb.rules" /etc/udev/rules.d/
 udevadm control --reload-rules
 echo "  Done"
 
-echo "[3/7] Installing player script..."
+echo "[3/8] Installing mount script (for overlay filesystem compatibility)..."
+cp "$SCRIPT_DIR/retrotv-mount.sh" /usr/local/bin/
+chmod 755 /usr/local/bin/retrotv-mount.sh
+echo "  Done"
+
+echo "[4/8] Installing player script..."
 cp "$SCRIPT_DIR/retrotv-player.sh" /usr/local/bin/
 chmod 755 /usr/local/bin/retrotv-player.sh
 echo "  Done"
 
-echo "[4/7] Installing systemd service..."
+echo "[5/8] Installing systemd service..."
 # Update service file with detected user
 sed "s/User=retro-tv/User=$SERVICE_USER/" "$SCRIPT_DIR/retrotv.service" > /etc/systemd/system/retrotv.service
 systemctl daemon-reload
 systemctl enable retrotv.service
 echo "  Done"
 
-echo "[5/7] Creating mount point and adding fstab entry..."
+echo "[6/8] Creating mount point and adding fstab entry..."
 mkdir -p /media/retroTV
 chown "$SERVICE_USER:$SERVICE_USER" /media/retroTV
 # Add fstab entry for reliable USB mounting (if not already present)
@@ -59,7 +64,7 @@ if ! grep -q "LABEL=retroTV" /etc/fstab; then
 fi
 echo "  Done"
 
-echo "[6/7] Configuring HDMI output..."
+echo "[7/8] Configuring HDMI output..."
 CONFIG_FILE="/boot/firmware/config.txt"
 if [ ! -f "$CONFIG_FILE" ]; then
     CONFIG_FILE="/boot/config.txt"
@@ -76,7 +81,7 @@ if [ -f "$CONFIG_FILE" ]; then
 fi
 echo "  Done"
 
-echo "[7/7] Setting USB drive permissions (if mounted)..."
+echo "[8/8] Setting USB drive permissions (if mounted)..."
 if mountpoint -q /media/retroTV 2>/dev/null; then
     chown -R "$SERVICE_USER:$SERVICE_USER" /media/retroTV
     echo "  Set ownership to $SERVICE_USER"
